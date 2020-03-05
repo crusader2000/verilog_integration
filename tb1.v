@@ -9,6 +9,8 @@ wire RDY_get;
 wire RDY_put;
 reg [31:0] out_reg;
 reg temp_EN_get;
+reg temp_EN_put;
+
 //--------------- dump -----------------------
 // initial begin
 //     $dumpfile("dumpVCD.vcd");
@@ -53,7 +55,7 @@ end
 
 always@(*)
 begin
-EN_put = reset && (addr < 6) ;//? 1'b1 : 1'b0
+EN_put = temp_EN_put && RDY_put;//? 1'b1 : 1'b0//reset && (addr < 6) &&
 end
 // assign in_bit = in_bits_vec[addr];
 
@@ -63,9 +65,12 @@ end
 always @(posedge clk) begin: receiver
     if (!reset) begin
         temp_EN_get <= 0;
+        temp_EN_put<=0;
     end
     else if(reset)begin
         temp_EN_get <= $urandom_range(0, 1); // some randomness on the receiver, otherwise, we won't see if our DUT behaves correctly in case of ready=0
+        temp_EN_put <= $urandom_range(0, 1); // some randomness on the receiver, otherwise, we won't see if our DUT behaves correctly in case of ready=0
+
         // out_reg <= out;
         // $display("random output    **************  %d",$urandom_range(0, 1));
 
@@ -73,7 +78,7 @@ always @(posedge clk) begin: receiver
 end
 always@(*)
 begin
-EN_get = RDY_get;
+EN_get = RDY_get && temp_EN_get;
 end
 always @(posedge clk) begin
 if(EN_get && RDY_get)
